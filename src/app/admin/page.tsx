@@ -85,9 +85,12 @@ export default async function AdminPage() {
             <p className="mt-2 text-sm text-gray-400">
               Управление магазином и администраторами.
             </p>
-            <p className="mt-5 text-sm text-orange-500">
-              Скоро
-            </p>
+            <Link
+               href="/admin/settings"
+              className="mt-5 inline-block text-sm font-bold text-orange-500 transition hover:text-orange-400"
+               >
+                Управление настройками →
+              </Link>
           </div>
         </div>
 
