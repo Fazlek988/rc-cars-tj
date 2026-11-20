@@ -66,9 +66,18 @@ export default async function AdminSettingsPage() {
               <p className="mt-2 text-sm text-gray-400">
                 {description}
               </p>
-              <p className="mt-5 text-sm text-orange-500">
+             {title === "Информация о магазине" ? (
+               <Link
+                 href="/admin/settings/store"
+                 className="mt-5 inline-block text-sm font-bold text-orange-500 transition hover:text-orange-400"
+                 >
+                Редактировать информацию →
+                 </Link>
+                 ) : (
+                 <p className="mt-5 text-sm text-orange-500">
                 В разработке
-              </p>
+               </p>
+                )}
             </div>
           ))}
         </div>
