@@ -2,13 +2,6 @@
 import Image from "next/image";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import {
-  Gauge,
-  Mountain,
-  CarFront,
-  FlagTriangleRight,
-  Helicopter,
-} from "lucide-react";
 
 
 const categories = [
@@ -219,20 +212,26 @@ export default async function Home() {
                   href={`/categories/${category.slug}`}
                   className="group block rounded-2xl border border-white/10 bg-[#141414] p-8 transition duration-300 hover:-translate-y-2 hover:border-orange-500"
                 >
-               <div className="mb-8 text-orange-500 transition-transform duration-300 group-hover:scale-110">
-  {category.slug === "drift" ? (
-    <Gauge size={52} strokeWidth={1.5} />
-  ) : category.slug === "offroad" ? (
-    <Mountain size={52} strokeWidth={1.5} />
-  ) : category.slug === "monster-truck" ? (
-    <CarFront size={52} strokeWidth={1.5} />
-  ) : category.slug === "short-course" ? (
-    <FlagTriangleRight size={52} strokeWidth={1.5} />
-  ) : category.slug === "helicopters" ? (
-    <Helicopter size={52} strokeWidth={1.5} />
-  ) : (
-    <CarFront size={52} strokeWidth={1.5} />
-  )}
+       <div className="relative mb-6 h-48 w-full overflow-hidden rounded-xl bg-[#0a0a0a]">
+  <Image
+    src={
+      category.slug === "drift"
+        ? "/мустанг.png"
+        : category.slug === "offroad"
+        ? "/бронко.png"
+        : category.slug === "monster-truck"
+        ? "/монстртрак.png"
+        : category.slug === "short-course"
+        ? "/шоурткоурс.png"
+        : category.slug === "helicopters"
+        ? "/вертолет.png"
+        : "/монстртрак.png"
+    }
+    alt={category.name}
+    fill
+    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+    className="object-cover transition-transform duration-500 group-hover:scale-105"
+  />
 </div>
                 <h3 className="mb-2 text-2xl font-bold">
                   {category.name}
