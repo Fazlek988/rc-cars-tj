@@ -1,8 +1,9 @@
 
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { createClient } from "@/lib/supabase/client";
 
 type CartItem = {
   id: string;
@@ -24,14 +25,110 @@ export default function CheckoutPage() {
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
 
+const [orderSettings, setOrderSettings] = useState<{
+  orders_enabled: boolean;
+  minimum_order_amount: number;
+} | null>(null);
+
+const [settingsLoading, setSettingsLoading] = useState(true);
+const [settingsError, setSettingsError] = useState(false);
+const [cartTotal, setCartTotal] = useState(0);
+
+useEffect(() => {
+  function updateCartTotal() {
+    try {
+      const cart: CartItem[] = JSON.parse(
+        localStorage.getItem("rc_cars_tj_cart") || "[]"
+      );
+
+      if (!Array.isArray(cart)) {
+        setCartTotal(0);
+        return;
+      }
+
+      const total = cart.reduce(
+        (sum, item) => sum + item.price * item.quantity,
+        0
+      );
+
+      setCartTotal(Number.isFinite(total) ? total : 0);
+    } catch {
+      setCartTotal(0);
+    }
+  }
+
+  updateCartTotal();
+
+  window.addEventListener("cart-updated", updateCartTotal);
+
+  return () => {
+    window.removeEventListener("cart-updated", updateCartTotal);
+  };
+}, []);
+
+useEffect(() => {
+  let active = true;
+
+  async function loadOrderSettings() {
+    const supabase = createClient();
+
+    const { data, error } = await supabase
+      .from("store_settings")
+      .select("orders_enabled, minimum_order_amount")
+      .eq("id", 1)
+      .single();
+
+    if (!active) return;
+
+    if (error || !data) {
+      console.error("Order settings loading failed:", error);
+      setSettingsError(true);
+    } else {
+      setOrderSettings({
+        orders_enabled: data.orders_enabled,
+        minimum_order_amount: Number(data.minimum_order_amount),
+      });
+    }
+
+    setSettingsLoading(false);
+  }
+
+  void loadOrderSettings();
+
+  return () => {
+    active = false;
+  };
+}, []);
+
   async function handleSubmit(
     e: React.FormEvent<HTMLFormElement>
   ) {
-    e.preventDefault();
+   e.preventDefault();
 
-    if (loading || success) return;
+if (loading || success) return;
 
-    setLoading(true);
+if (settingsLoading || settingsError || !orderSettings) {
+  setError(
+    "Танзимоти фармоиш дастрас нестанд. Лутфан саҳифаро аз нав кушоед."
+  );
+  return;
+}
+
+if (!orderSettings.orders_enabled) {
+  setError(
+    "Қабули фармоишҳо муваққатан қатъ шудааст. Лутфан дертар кӯшиш кунед."
+  );
+  return;
+}
+
+if (cartTotal < orderSettings.minimum_order_amount) {
+  setError(
+    `Ҳадди ақали фармоиш ${orderSettings.minimum_order_amount} сомонӣ аст. Маблағи сабади шумо ${cartTotal.toFixed(2)} сомонӣ мебошад.`
+  );
+  return;
+}
+
+setLoading(true);
     setError("");
 
     try {
@@ -155,6 +252,62 @@ export default function CheckoutPage() {
           Маълумоти худро ворид кунед. Мо бо шумо тамос мегирем.
         </p>
 
+{settingsLoading && (
+  <p className="mt-8 text-sm text-gray-400">
+    Танзимоти фармоиш бор карда мешаванд...
+  </p>
+)}
+
+{settingsError && (
+  <p
+    role="alert"
+    className="mt-8 rounded-xl border border-red-500/40 bg-red-500/10 p-4 text-red-400"
+  >
+    Танзимоти фармоиш дастрас нестанд.
+    Лутфан саҳифаро аз нав кушоед.
+  </p>
+)}
+
+{orderSettings && !orderSettings.orders_enabled && (
+  <p
+    role="alert"
+    className="mt-8 rounded-xl border border-orange-500/40 bg-orange-500/10 p-4 text-orange-400"
+  >
+    Қабули фармоишҳо муваққатан қатъ шудааст.
+    Лутфан дертар кӯшиш кунед.
+  </p>
+)}
+
+{orderSettings &&
+  orderSettings.orders_enabled &&
+  orderSettings.minimum_order_amount > 0 &&
+  cartTotal < orderSettings.minimum_order_amount && (
+    <div
+      role="alert"
+      className="mt-8 rounded-xl border border-orange-500/40 bg-orange-500/10 p-4 text-orange-400"
+    >
+      <p className="font-bold">
+        Маблағи фармоиш аз ҳадди ақал камтар аст.
+      </p>
+
+      <p className="mt-2 text-sm">
+        Ҳадди ақали фармоиш:{" "}
+        {orderSettings.minimum_order_amount} сомонӣ
+      </p>
+
+      <p className="mt-1 text-sm">
+        Маблағи сабади шумо: {cartTotal.toFixed(2)} сомонӣ
+      </p>
+
+      <Link
+        href="/cart"
+        className="mt-3 inline-block text-sm font-bold underline"
+      >
+        Бозгашт ба сабад
+      </Link>
+    </div>
+  )}
+
         <form
           onSubmit={handleSubmit}
           className="mt-10 space-y-6"
@@ -247,7 +400,13 @@ export default function CheckoutPage() {
 
           <button
             type="submit"
-            disabled={loading}
+          disabled={
+               loading ||
+               settingsLoading ||
+               settingsError ||
+               !orderSettings?.orders_enabled ||
+                cartTotal < (orderSettings?.minimum_order_amount ?? 0)
+               }
             className="w-full rounded-xl bg-orange-500 p-5 text-lg font-bold text-black transition hover:bg-orange-400 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {loading

@@ -81,11 +81,25 @@ export default async function AdminSettingsPage() {
               >
               Настроить доставку и оплату →
               </Link>
-         ) : (
-            <p className="mt-5 text-sm text-orange-500">
-                 В разработке
-                </p>
-                )}
+      ) : title === "Администраторы" && staff.role === "owner" ? (
+  <Link
+    href="/admin/settings/admins"
+    className="mt-5 inline-block text-sm font-bold text-orange-500 transition hover:text-orange-400"
+  >
+    Управление администраторами →
+  </Link>
+) : title === "Настройки заказов" ? (
+  <Link
+    href="/admin/settings/orders"
+    className="mt-5 inline-block text-sm font-bold text-orange-500 transition hover:text-orange-400"
+  >
+    Настроить заказы →
+  </Link>
+) : (
+  <p className="mt-5 text-sm text-orange-500">
+    В разработке
+  </p>
+)}
             </div>
           ))}
         </div>

@@ -265,17 +265,10 @@ if (imageFile) {
         .select("id")
         .single();
 
-     
-if (updateError) {
-  if (uploadedPath) {
-    await supabase.storage
-      .from("product-images")
-      .remove([uploadedPath]);
-  }
-
-  setError(`Ошибка сохранения товара: ${updateError.message}`);
-  return;
-}
+      if (updateError) {
+        setError(updateError.message);
+        return;
+      }
 
       router.push("/admin/products");
       router.refresh();

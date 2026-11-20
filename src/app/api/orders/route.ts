@@ -89,14 +89,36 @@ export async function POST(request: NextRequest) {
         p_checkout_key: checkout_key,
       });
 
-    if (orderError || !orderId) {
-      console.error("Order database error:", orderError);
+   if (orderError || !orderId) {
+  console.error("Order database error:", orderError);
 
-      return NextResponse.json(
-        { error: "Фармоиш сабт нашуд. Дубора кӯшиш кунед." },
-        { status: 500 }
-      );
-    }
+  const errorMessage = orderError?.message ?? "";
+
+  if (errorMessage.includes("SHOP_ORDERS_DISABLED")) {
+    return NextResponse.json(
+      {
+        error:
+          "Қабули фармоишҳо муваққатан қатъ шудааст. Лутфан дертар кӯшиш кунед.",
+      },
+      { status: 403 }
+    );
+  }
+
+  if (errorMessage.includes("SHOP_MINIMUM_ORDER_AMOUNT")) {
+    return NextResponse.json(
+      {
+        error:
+          "Маблағи фармоиши шумо аз ҳадди ақали муқарраршуда камтар аст.",
+      },
+      { status: 400 }
+    );
+  }
+
+  return NextResponse.json(
+    { error: "Фармоиш сабт нашуд. Дубора кӯшиш кунед." },
+    { status: 500 }
+  );
+}
 
     // Проверяем, отправляли ли уведомление ранее.
     const { data: order, error: readError } = await supabase
