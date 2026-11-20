@@ -2,6 +2,13 @@
 import Image from "next/image";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import {
+  Gauge,
+  Mountain,
+  CarFront,
+  FlagTriangleRight,
+  Helicopter,
+} from "lucide-react";
 
 
 const categories = [
@@ -51,7 +58,7 @@ export default async function Home() {
   }
   const { data: storeSettings, error: storeSettingsError } = await supabase
     .from("store_settings")
-    .select("store_name, phone, whatsapp, telegram, instagram, address, description")
+    .select("store_name, phone, whatsapp, telegram, instagram, address, description, delivery_dushanbe_free, delivery_other_cities, payment_info")
     .eq("id", 1)
     .maybeSingle();
 
@@ -212,10 +219,21 @@ export default async function Home() {
                   href={`/categories/${category.slug}`}
                   className="group block rounded-2xl border border-white/10 bg-[#141414] p-8 transition duration-300 hover:-translate-y-2 hover:border-orange-500"
                 >
-                <div className="mb-8 text-6xl">
-                  {category.icon}
-                </div>
-
+               <div className="mb-8 text-orange-500 transition-transform duration-300 group-hover:scale-110">
+  {category.slug === "drift" ? (
+    <Gauge size={52} strokeWidth={1.5} />
+  ) : category.slug === "offroad" ? (
+    <Mountain size={52} strokeWidth={1.5} />
+  ) : category.slug === "monster-truck" ? (
+    <CarFront size={52} strokeWidth={1.5} />
+  ) : category.slug === "short-course" ? (
+    <FlagTriangleRight size={52} strokeWidth={1.5} />
+  ) : category.slug === "helicopters" ? (
+    <Helicopter size={52} strokeWidth={1.5} />
+  ) : (
+    <CarFront size={52} strokeWidth={1.5} />
+  )}
+</div>
                 <h3 className="mb-2 text-2xl font-bold">
                   {category.name}
                 </h3>
@@ -305,6 +323,77 @@ export default async function Home() {
           )}
         </div>
       </section>
+       
+{/* Доставка и оплата */}
+<section className="border-t border-white/10 px-6 py-16 md:px-16">
+  <div className="mx-auto max-w-7xl">
+   <h2 className="mb-10 text-center text-3xl font-black md:text-4xl">
+  <span className="text-orange-500">Расонидан</span>
+  {" ва "}
+  <span className="text-white">пардохт</span>
+</h2>
+
+    <div className="grid gap-5 md:grid-cols-3">
+      <div className="rounded-2xl border border-white/10 bg-[#171717] p-6">
+   <div className="relative mb-5 h-44 overflow-hidden rounded-xl">
+  <Image
+    src="/delivery-dushanbe.png"
+    alt="Расонидан дар Душанбе"
+    fill
+    sizes="(max-width: 768px) 100vw, 33vw"
+    className="object-cover"
+  />
+</div>
+        <h3 className="text-xl font-bold">
+          Расонидан дар Душанбе
+        </h3>
+        <p className="mt-3 text-gray-400">
+          {storeSettings?.delivery_dushanbe_free
+            ? "Расонидан дар шаҳри Душанбе ройгон аст."
+            : "Нархи расонидан дар Душанбе мувофиқа карда мешавад."}
+        </p>
+      </div>
+
+      <div className="rounded-2xl border border-white/10 bg-[#171717] p-6">
+        <div className="relative mb-5 h-44 overflow-hidden rounded-xl">
+  <Image
+    src="/delivery-tajikistan.png"
+    alt="Расонидан ба шаҳрҳои Тоҷикистон"
+    fill
+    sizes="(max-width: 768px) 100vw, 33vw"
+    className="object-cover"
+  />
+</div>
+        <h3 className="text-xl font-bold">
+          Дигар шаҳрҳои Тоҷикистон
+        </h3>
+        <p className="mt-3 text-gray-400">
+          {storeSettings?.delivery_other_cities ||
+            "Шартҳои расонидан бо муштарӣ мувофиқа карда мешаванд."}
+        </p>
+      </div>
+
+      <div className="rounded-2xl border border-white/10 bg-[#171717] p-6">
+     <div className="relative mb-5 h-44 overflow-hidden rounded-xl">
+  <Image
+    src="/payment.png"
+    alt="Тарзи пардохт"
+    fill
+    sizes="(max-width: 768px) 100vw, 33vw"
+    className="object-cover"
+  />
+</div>
+        <h3 className="text-xl font-bold">
+          Тарзи пардохт
+        </h3>
+        <p className="mt-3 text-gray-400">
+          {storeSettings?.payment_info ||
+            "Тарзи пардохт тавассути WhatsApp мувофиқа карда мешавад."}
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
 
       
 {/* Подвал */}
