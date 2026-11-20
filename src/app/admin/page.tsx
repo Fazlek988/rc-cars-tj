@@ -1,4 +1,4 @@
-
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 
@@ -57,9 +57,12 @@ export default async function AdminPage() {
             <p className="mt-2 text-sm text-gray-400">
               Добавление, редактирование и удаление RC-машинок.
             </p>
-            <p className="mt-5 text-sm text-orange-500">
-              Скоро
-            </p>
+            <Link
+                href="/admin/products"
+                className="mt-5 inline-block text-sm font-semibold text-orange-500 hover:text-orange-400"
+               >
+               Управление товарами →
+           </Link>
           </div>
 
           <div className="rounded-2xl border border-white/10 bg-[#171717] p-6">
@@ -68,9 +71,12 @@ export default async function AdminPage() {
             <p className="mt-2 text-sm text-gray-400">
               Просмотр заказов и контактов покупателей.
             </p>
-            <p className="mt-5 text-sm text-orange-500">
-              Скоро
-            </p>
+          <Link
+                  href="/admin/orders"
+                  className="mt-5 inline-block text-sm font-semibold text-orange-500 hover:text-orange-400"
+                   >
+                 Управление заказами →
+            </Link> 
           </div>
 
           <div className="rounded-2xl border border-white/10 bg-[#171717] p-6">
