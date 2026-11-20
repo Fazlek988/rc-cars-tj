@@ -1,13 +1,20 @@
 
 "use client";
 
-import { useEffect, useState, type FormEvent } from "react";
+
+import {
+  useEffect,
+  useState,
+  type ChangeEvent,
+  type FormEvent,
+} from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
 type Product = {
   id: string;
+  category_id: string | null;
   name: string;
   price: number;
   old_price: number | null;
@@ -32,9 +39,14 @@ export default function EditProductPage() {
   const [supabase] = useState(() => createClient());
 
   const [product, setProduct] = useState<Product | null>(null);
+  const [categories, setCategories] = useState<
+    { id: string; name: string }[]
+  >([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [imageFile, setImageFile] = useState<File | null>(null);
+
 
   useEffect(() => {
     let cancelled = false;
@@ -71,9 +83,10 @@ export default function EditProductPage() {
 
       const { data, error: loadError } = await supabase
         .from("products")
+       
         .select(
-          "id, name, price, old_price, stock_quantity, description, brand, model, scale, max_speed_kmh, battery_info, image_url, is_active"
-        )
+           "id, category_id, name, price, old_price, stock_quantity, description, brand, model, scale, max_speed_kmh, battery_info, image_url, is_active"
+          )  
         .eq("id", id)
         .single();
 
@@ -88,13 +101,70 @@ export default function EditProductPage() {
       setLoading(false);
     }
 
-    loadProduct();
+ 
+async function loadCategories() {
+  const { data, error: categoriesError } = await supabase
+    .from("categories")
+    .select("id, name")
+    .eq("is_active", true)
+    .order("sort_order", { ascending: true });
 
-    return () => {
-      cancelled = true;
-    };
+  if (cancelled) return;
+
+  if (categoriesError) {
+
+console.error(
+  "Ошибка загрузки категорий:",
+  JSON.stringify(categoriesError, null, 2),
+  categoriesError.message
+);
+
+    setError("Не удалось загрузить категории");
+    return;
+  }
+
+  setCategories(data ?? []);
+}
+
+loadProduct();
+loadCategories();
+
+return () => {
+  cancelled = true;
+};
   }, [id, router, supabase]);
 
+function handleImageChange(e: ChangeEvent<HTMLInputElement>) {
+  const file = e.target.files?.[0] ?? null;
+  setError("");
+
+  if (!file) {
+    setImageFile(null);
+    return;
+  }
+
+  const allowedTypes = [
+    "image/jpeg",
+    "image/png",
+    "image/webp",
+  ];
+
+  if (!allowedTypes.includes(file.type)) {
+    setError("Разрешены только JPG, PNG и WebP");
+    e.target.value = "";
+    setImageFile(null);
+    return;
+  }
+
+  if (file.size > 5 * 1024 * 1024) {
+    setError("Размер фотографии не должен превышать 5 MB");
+    e.target.value = "";
+    setImageFile(null);
+    return;
+  }
+
+  setImageFile(file);
+}
   function updateField<K extends keyof Product>(
     field: K,
     value: Product[K]
@@ -130,10 +200,55 @@ export default function EditProductPage() {
     setSaving(true);
 
     try {
+
+let finalImageUrl = product.image_url;
+let uploadedPath: string | null = null;
+
+if (imageFile) {
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    setError("Войди в админ-панель заново");
+    return;
+  }
+
+  const extension =
+    imageFile.type === "image/png"
+      ? "png"
+      : imageFile.type === "image/webp"
+        ? "webp"
+        : "jpg";
+
+  const filePath = `${user.id}/${crypto.randomUUID()}.${extension}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from("product-images")
+    .upload(filePath, imageFile, {
+      contentType: imageFile.type,
+      upsert: false,
+    });
+
+  if (uploadError) {
+    setError(`Ошибка загрузки фотографии: ${uploadError.message}`);
+    return;
+  }
+
+  uploadedPath = filePath;
+
+  const { data: publicUrlData } = supabase.storage
+    .from("product-images")
+    .getPublicUrl(filePath);
+
+  finalImageUrl = publicUrlData.publicUrl;
+}
       const { error: updateError } = await supabase
         .from("products")
         .update({
           name: product.name.trim(),
+          category_id: product.category_id,
           price: product.price,
           old_price: product.old_price,
           stock_quantity: product.stock_quantity,
@@ -143,17 +258,24 @@ export default function EditProductPage() {
           scale: product.scale?.trim() || null,
           max_speed_kmh: product.max_speed_kmh,
           battery_info: product.battery_info?.trim() || null,
-          image_url: product.image_url?.trim() || null,
+          image_url: finalImageUrl,
           is_active: product.is_active,
         })
         .eq("id", product.id)
         .select("id")
         .single();
 
-      if (updateError) {
-        setError(updateError.message);
-        return;
-      }
+     
+if (updateError) {
+  if (uploadedPath) {
+    await supabase.storage
+      .from("product-images")
+      .remove([uploadedPath]);
+  }
+
+  setError(`Ошибка сохранения товара: ${updateError.message}`);
+  return;
+}
 
       router.push("/admin/products");
       router.refresh();
@@ -204,6 +326,31 @@ export default function EditProductPage() {
           onSubmit={handleSubmit}
           className="mt-8 space-y-6 rounded-2xl border border-white/10 bg-[#171717] p-6"
         >
+
+            <div>
+              <label htmlFor="category" className="mb-2 block">
+               Категория товара *
+            </label>
+
+             <select
+               id="category"
+               className={inputClass}
+               value={product.category_id ?? ""}
+               onChange={(e) =>
+               updateField("category_id", e.target.value)
+             }
+           required
+               >
+           <option value="">Выбери категорию</option>
+
+             {categories.map((category) => (
+            <option key={category.id} value={category.id}>
+             {category.name}
+           </option>
+              ))}
+           </select>
+          </div>
+
           <div>
             <label htmlFor="name" className="mb-2 block">
               Название товара *
@@ -365,6 +512,29 @@ export default function EditProductPage() {
             />
           </div>
 
+<div>
+  <label htmlFor="imageFile" className="mb-2 block">
+    Загрузить фотографию с компьютера
+  </label>
+
+  <input
+    id="imageFile"
+    type="file"
+    accept="image/jpeg,image/png,image/webp"
+    onChange={handleImageChange}
+    className={inputClass}
+  />
+
+  <p className="mt-2 text-xs text-gray-400">
+    JPG, PNG или WebP. Максимум 5 МБ.
+  </p>
+
+  {imageFile && (
+    <p className="mt-2 text-sm text-orange-400">
+      Выбрано: {imageFile.name}
+    </p>
+  )}
+</div>
           <div>
             <label htmlFor="imageUrl" className="mb-2 block">
               Ссылка на фотографию

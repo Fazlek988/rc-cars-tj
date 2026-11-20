@@ -148,7 +148,7 @@ export default function CheckoutPage() {
         </p>
 
         <h1 className="mt-3 text-4xl font-black">
-          ОФОРМИШИ ФАРМОИШ
+         БА ОХИР РАСОНИДАНИ ФАРМОИШ
         </h1>
 
         <p className="mt-4 text-gray-400">

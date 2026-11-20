@@ -3,12 +3,38 @@ import Image from "next/image";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 
+
 const categories = [
-  { name: "Дрифт", icon: "🏎️", description: "Мошинҳои дрифт" },
-  { name: "Оффроуд", icon: "⛰️", description: "Барои роҳҳои душвор" },
-  { name: "Монстр-трак", icon: "🚙", description: "Қудрат ва суръат" },
-  { name: "Шорт-корс", icon: "🏁", description: "Мошинҳои пойга" },
-  { name: "Вертолётҳо", icon: "🚁", description: "Парвоз ва адреналин" },
+  {
+    name: "Дрифт",
+    icon: "🏎️",
+    description: "Мошинҳои дрифт",
+    slug: "drift",
+  },
+  {
+    name: "Оффроуд",
+    icon: "⛰️",
+    description: "Барои роҳҳои душвор",
+    slug: "offroad",
+  },
+  {
+    name: "Монстр-трак",
+    icon: "🚙",
+    description: "Қудрат ва суръат",
+    slug: "monster-truck",
+  },
+  {
+    name: "Шорт-корс",
+    icon: "🏁",
+    description: "Мошинҳои пойга",
+    slug: "short-course",
+  },
+  {
+    name: "Вертолётҳо",
+    icon: "🚁",
+    description: "Парвоз ва адреналин",
+    slug: "helicopters",
+  },
 ];
 
 export default async function Home() {
@@ -53,7 +79,7 @@ export default async function Home() {
   </Link>
 
            <a
-              href="#products"
+              href="#catalog"
               className="rounded-full bg-orange-500 px-5 py-3 text-sm font-bold text-black transition hover:bg-orange-400"
              >
             Каталог
@@ -168,11 +194,13 @@ export default async function Home() {
           </h2>
 
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+         
             {categories.map((category) => (
-              <div
-                key={category.name}
-                className="group rounded-2xl border border-white/10 bg-[#141414] p-8 transition duration-300 hover:-translate-y-2 hover:border-orange-500"
-              >
+                  <Link
+                  key={category.name}
+                  href={`/categories/${category.slug}`}
+                  className="group block rounded-2xl border border-white/10 bg-[#141414] p-8 transition duration-300 hover:-translate-y-2 hover:border-orange-500"
+                >
                 <div className="mb-8 text-6xl">
                   {category.icon}
                 </div>
@@ -185,10 +213,10 @@ export default async function Home() {
                   {category.description}
                 </p>
 
-                <div className="mt-8 font-bold text-orange-500">
+           <div className="mt-8 font-bold text-orange-500">
                   Дидани моделҳо →
-                </div>
               </div>
+            </Link>
             ))}
           </div>
         </div>
@@ -267,13 +295,21 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* Подвал */}
-      <footer
-        id="about"
-        className="border-t border-white/10 px-6 py-10 text-center text-sm text-gray-500"
-      >
-        © 2026 RC.CARS_TJ — Тоҷикистон
-      </footer>
+      
+{/* Подвал */}
+<footer
+  id="about"
+  className="border-t border-white/10 px-6 py-10 text-center text-sm text-gray-500"
+>
+  <p>© 2026 RC.CARS_TJ — Тоҷикистон</p>
+
+  <Link
+    href="/admin"
+    className="mt-4 inline-block text-gray-600 transition hover:text-orange-500"
+  >
+    Админ-панель
+  </Link>
+</footer>
     </main>
   );
 }

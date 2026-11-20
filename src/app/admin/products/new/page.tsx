@@ -1,7 +1,8 @@
 
 "use client";
 
-import { useState, type ChangeEvent, type FormEvent } from "react";
+
+import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
@@ -13,6 +14,13 @@ export default function NewProductPage() {
   const router = useRouter();
   const [supabase] = useState(() => createClient());
 
+type ProductCategory = {
+  id: string;
+  name: string;
+};
+
+  const [categories, setCategories] = useState<ProductCategory[]>([]);
+  const [categoryId, setCategoryId] = useState("");
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
   const [oldPrice, setOldPrice] = useState("");
@@ -29,6 +37,26 @@ export default function NewProductPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [status, setStatus] = useState("");
+  
+useEffect(() => {
+  async function loadCategories() {
+    const { data, error } = await supabase
+      .from("categories")
+      .select("id, name")
+      .eq("is_active", true)
+      .order("sort_order", { ascending: true });
+
+    if (error) {
+      console.error("Ошибка загрузки категорий:", error);
+      setError("Не удалось загрузить категории");
+      return;
+    }
+
+    setCategories(data ?? []);
+  }
+
+  loadCategories();
+}, [supabase]);
 
   function handleImageChange(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0] ?? null;
@@ -167,6 +195,7 @@ export default function NewProductPage() {
         .insert({
           name: name.trim(),
           slug: uniqueSlug,
+          category_id: categoryId,
           price: priceNumber,
           old_price: oldPriceNumber,
           stock_quantity: stockNumber,
@@ -225,6 +254,29 @@ export default function NewProductPage() {
           onSubmit={handleSubmit}
           className="mt-8 space-y-6 rounded-2xl border border-white/10 bg-[#171717] p-6"
         >
+
+          <div> 
+             <label htmlFor="category" className="mb-2 block">
+             Категория товара *
+         </label>
+
+          <select
+           id="category"
+           value={categoryId}
+           onChange={(e) => setCategoryId(e.target.value)}
+           className={inputClass}
+           required
+           >
+          <option value="">Выбери категорию</option>
+
+           {categories.map((category) => (
+           <option key={category.id} value={category.id}>
+            {category.name}
+          </option>
+         ))}
+          </select>
+         </div>
+
           <div>
             <label htmlFor="name" className="mb-2 block">
               Название товара *
