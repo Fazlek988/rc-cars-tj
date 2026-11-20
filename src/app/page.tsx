@@ -49,7 +49,18 @@ export default async function Home() {
   if (error) {
     console.error("Ошибка загрузки каталога:", error.message);
   }
+  const { data: storeSettings, error: storeSettingsError } = await supabase
+    .from("store_settings")
+    .select("store_name, phone, whatsapp, telegram, instagram, address, description")
+    .eq("id", 1)
+    .maybeSingle();
 
+  if (storeSettingsError) {
+    console.error(
+      "Ошибка загрузки настроек магазина:",
+      storeSettingsError.message
+    );
+  }
   return (
     <main className="min-h-screen overflow-x-hidden bg-[#080808] text-white">
       {/* Навигация */}
@@ -302,6 +313,56 @@ export default async function Home() {
   className="border-t border-white/10 px-6 py-10 text-center text-sm text-gray-500"
 >
   <p>© 2026 RC.CARS_TJ — Тоҷикистон</p>
+
+<div className="mt-6 flex flex-wrap items-center justify-center gap-5">
+  {storeSettings?.phone && (
+    <a
+      href={`tel:${storeSettings.phone.replace(/[^\d+]/g, "")}`}
+      className="transition hover:text-orange-500"
+    >
+      📞 {storeSettings.phone}
+    </a>
+  )}
+
+  {storeSettings?.whatsapp && (
+    <a
+      href={`https://wa.me/${storeSettings.whatsapp.replace(/\D/g, "")}`}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="transition hover:text-orange-500"
+    >
+      WhatsApp
+    </a>
+  )}
+
+  {storeSettings?.telegram && (
+    <a
+      href={`https://t.me/${storeSettings.telegram.replace(/^@/, "")}`}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="transition hover:text-orange-500"
+    >
+      Telegram
+    </a>
+  )}
+
+  {storeSettings?.instagram && (
+    <a
+      href={`https://www.instagram.com/${storeSettings.instagram.replace(/^@/, "")}/`}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="transition hover:text-orange-500"
+    >
+      Instagram
+    </a>
+  )}
+</div>
+
+{storeSettings?.address && (
+  <p className="mt-5 text-gray-400">
+    📍 {storeSettings.address}
+  </p>
+)}
 
   <Link
     href="/admin"
